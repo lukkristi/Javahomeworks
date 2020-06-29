@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <title>Aktivonst jedan</title>
+    </h:head>
+    <h:body>
+        <h:form>
+            <h:selectOneListbox id="korisnik" size="10" value="#{prikazKorisnika.odabraniKorisnik}">               
+                <f:selectItem itemLabel="Odaberi korisnika" itemValue="#{prikazKorisnika.odabraniKorisnik}" itemDisabled="true" />
+                <f:selectItems value="#{prikazKorisnika.aerodromiKorisnika}" var="koris"  itemLabel="#{koris} #{koris.prezime} (#{koris.myairportsList.size()})" 
+                               itemValue="#{koris.korIme}"/>
+            </h:selectOneListbox><br/>
+            <h:commandButton  value="Prikazi korisnikove aerodrome" action="#{prikazKorisnika.dohvatiAerodromeKorisnika()}">                
+                <f:ajax execute="korisnik" render="Aerodromi Panela1"/>
+            </h:commandButton><br/>
+            <h:panelGrid id="Panela1">
+                <p:dataTable id="Aerodromi" value="#{prikazKorisnika.aerodromiKorisnika}" rendered="#{prikazKorisnika.odabraniKorisnik2}" rows="7" var="a"  paginator="true"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="5,10,50">
+                    <p:column>
+                        <f:facet name="header">IDENT</f:facet>#{a.ident.ident}
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Broj korisnika koji prate</f:facet>#{a.ident.myairportsList.size()}
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Broj dana</f:facet>#{a.ident.myairportslogList.size()}
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Broj letova</f:facet>#{a.ident.airplanesList.size()}
+                    </p:column>
+                    <p:column>
+                        <p:commandButton  value="Prikazi datume"  update="@form" actionListener="#{prikazKorisnika.dohvatiAerodromLog(a.ident)}">                            
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable><br/>
+            </h:panelGrid>
+            <h:panelGrid id="LUKAS">
+                <p:dataTable id="Datumi" value="#{prikazKorisnika.aerodromLogovi}" rendered="#{prikazKorisnika.odabraniAerodom}" rows="10" var="aer"  paginator="true"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="5,10,50">
+                    <p:column>
+                        <f:facet name="header">Dan preuzimanja</f:facet>
+                        <h:outputText value="#{aer.myairportslogPK.flightdate}">
+                            <f:convertDateTime pattern="dd.MM.yyyy"/>
+                        </h:outputText>                        
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Vrijeme preuzimanja</f:facet>
+                        <h:outputText value="#{aer.stored}">
+                            <f:convertDateTime timeZone="CET" pattern="dd.MM.yyyy HH:mm:ss.SSS"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton value="Brisanje podataka" update="@form" action="#{prikazKorisnika.izbrisiAerodromLog(aer)}"/>
+                    </p:column>
+                </p:dataTable>
+            </h:panelGrid><br/>
+            <p:commandButton  value="Vrati se na početak"  update="@form" actionListener="#{prikazKorisnika.vratiNaPocetak()}">                            
+            </p:commandButton>
+        </h:form>
+    </h:body>
+</html>
+
