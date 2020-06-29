@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <title>Aktivnost dva</title>
+    </h:head>
+    <h:body>
+        <h:form id="forma">
+            <h:panelGrid id="Panela1">
+                <p:dataTable id="Korisnici" value="#{aktivnost2.korisnici}" rows="7" var="k"  paginator="true"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="5,10,50">
+                    <p:column>
+                        <f:facet name="header">Ime </f:facet>#{k.ime}
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Prezime</f:facet>#{k.prezime}
+                    </p:column>                    
+                    <p:column>
+                        <p:commandButton  value="Odaberi korisnika"  update="@form" actionListener="#{aktivnost2.setOdabraniKorisnik(k.korIme)}">                            
+                        </p:commandButton>
+                    </p:column>                   
+                </p:dataTable><br/>
+            </h:panelGrid>
+            <h:panelGrid>
+                <h:outputLabel>Unesi naziv za filtriranje: </h:outputLabel>&nbsp;
+                <h:inputText id="naziv" value="#{aktivnost2.naziv}" style="width: 330px" >
+            </h:inputText>&nbsp;
+            
+            <h:commandButton value="Potraži JPQL" action="#{aktivnost2.izvrsiJPQLUpit()}">
+                <f:ajax execute="naziv" render="forma"/>
+            </h:commandButton>
+            <h:commandButton value="Potraži CApi" action="#{aktivnost2.izvrsiCApipit()}">
+                <f:ajax execute="naziv" render="forma"/>
+            </h:commandButton>
+            <br/>
+            </h:panelGrid>
+            <h:panelGrid id="LUKAS">
+                <p:dataTable id="Aerodromi" value="#{aktivnost2.aerodromi}" rendered="#{aktivnost2.prikazAerodom}" rows="10" var="aer"  paginator="true"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="5,10,50">
+                    <p:column>
+                        <f:facet name="header">IDENT</f:facet>#{aer.ident}                                         
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Naziv</f:facet>#{aer.name}                        
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Vlaga</f:facet>#{aer.isoRegion}                                         
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">Temperatura</f:facet>#{aer.isoCountry}                                         
+                    </p:column>    
+                    <p:column>
+                        <p:commandButton value="Odaberi aerodrom" update="@form" action="#{aktivnost2.dodajAerodrom(aer.ident)}"/>
+                    </p:column>
+                </p:dataTable>
+            </h:panelGrid><br/>
+            <h:panelGrid>               
+                <h:commandButton value="Testiraj" action="#{aktivnost2.izvrsiCApipit()}">
+                <f:ajax execute="naziv" render="forma"/>
+            </h:commandButton>
+            <br/>
+            </h:panelGrid>
+        </h:form>
+    </h:body>
+</html>
+
