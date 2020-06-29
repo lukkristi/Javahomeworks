@@ -1,0 +1,103 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.foi.nwtis.lukkristi.web.dretve;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.foi.nwtis.lukkristi.konfiguracije.bp.BP_Konfiguracija;
+import org.foi.nwtis.lukkristi.web.podaci.AirportDAO;
+import org.foi.nwtis.podaci.Aerodrom;
+import org.foi.nwtis.podaci.Airport;
+import org.foi.nwtis.rest.klijenti.OSKlijent;
+import org.foi.nwtis.rest.podaci.AvionLeti;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class PreuzimanjeLetovaAvionaAerodroma extends Thread{
+
+    private BP_Konfiguracija konf;   
+    int intervalCiklusa=100*1000;
+    Boolean krajPreuzimanja = false;
+    String username;
+    String password;
+    OSKlijent oSKlijent;
+    int inicijalniPocetakIntervala;
+    String pocetniDatum;
+    String krajDatum;
+    Long pocetniInterval;
+    Long SljedeceInterval;
+    int pauzaDretve;
+    int trajanjeCiklusaDretve;
+    AirportDAO airportDAO;
+    
+    
+    
+    public PreuzimanjeLetovaAvionaAerodroma(BP_Konfiguracija konf) {
+        this.konf = konf;
+    }
+    
+    @Override
+    public void interrupt() {
+        krajPreuzimanja=true;
+        super.interrupt(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void run() {
+        int brojac=0;
+        while(!krajPreuzimanja){
+            System.out.println("BROJAC: " + brojac++);
+            try {
+                List<Airport> aerodromi = new ArrayList<>();
+                aerodromi=airportDAO.dajSveKorisnikAerodrome();
+                for (Airport aerodrom : aerodromi) {
+                    
+            }
+                
+                //TODO üreuzimanje aerodroma i avione od aerodroma za pojedini dan 
+                Thread.sleep(pauzaDretve);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(PreuzimanjeLetovaAvionaAerodroma.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    @Override
+    public synchronized void start() {
+        username= konf.getOpenSkyNetworkKorisnik();
+        password=konf.getOpenSkyNetworkLozinka();
+        oSKlijent = new OSKlijent(username, password);
+        //TODO preuzimanje podataka iz konfiguracije  i pridruzi ih atributima
+        pocetniDatum= konf.getPreuzimanjePocetak();
+        krajDatum=konf.getPreuzimanjeKraj();
+        pauzaDretve=konf.getPreuzimanjePauza();
+        trajanjeCiklusaDretve=konf.getPreuzimanjeCiklusa();
+        airportDAO=new AirportDAO(konf);
+        pretvoriDatumUMilisekunde();
+        
+        super.start(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void pretvoriDatumUMilisekunde() {
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        Date datum;
+        try {
+            datum= df.parse(pocetniDatum);
+            pocetniInterval=datum.getTime();
+            SljedeceInterval=pocetniInterval+(24*60*trajanjeCiklusaDretve*1000);
+        } catch (ParseException ex) {
+            Logger.getLogger(PreuzimanjeLetovaAvionaAerodroma.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+}

@@ -1,0 +1,212 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.foi.nwtis.lukkristi.web.podaci;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.foi.nwtis.lukkristi.konfiguracije.bp.BP_Konfiguracija;
+import org.foi.nwtis.podaci.Airport;
+import org.foi.nwtis.rest.podaci.AvionLeti;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class AirportDAO {
+    private String server;
+    private String korisnik;
+    private String lozinkaBP;
+    private String baza;
+    private BP_Konfiguracija bpk;
+
+    public AirportDAO(BP_Konfiguracija bpk) {
+       this.bpk = bpk;
+        this.baza = bpk.getUserDatabase();
+        this.server = bpk.getServerDatabase();
+        this.korisnik = bpk.getUserUsername();
+        this.lozinkaBP = bpk.getUserPassword();
+    }
+    
+
+    public List<Airport> dajSveAerodrome(BP_Konfiguracija bpk, String drzava) {        
+        String upit = "SELECT ident, type, name, elevation_ft, continent, iso_country, "
+                + "iso_region, municipality, gps_code, iata_code, local_code, coordinates FROM airports";
+
+        if (drzava != null && !drzava.trim().isEmpty()) {
+            if (drzava.compareTo("*") == 0) {
+            } else {
+                upit += " WHERE iso_country = '" + drzava + "'";
+            }
+        }
+
+        try {
+            Class.forName(bpk.getDriverDatabase(server + baza));
+
+            try (
+                    Connection con = DriverManager.getConnection(server + baza, korisnik, lozinkaBP);
+                    Statement s = con.createStatement();
+                    ResultSet rs = s.executeQuery(upit)) {
+
+                List<Airport> aerodromi = new ArrayList<>();
+
+                while (rs.next()) {
+                    String ident = rs.getString("ident");
+                    String type = rs.getString("type");
+                    String name = rs.getString("name");
+                    String elevation_ft = rs.getString("elevation_ft");
+                    String continent = rs.getString("continent");
+                    String iso_country = rs.getString("iso_country");
+                    String iso_region = rs.getString("iso_region");
+                    String municipality = rs.getString("municipality");
+                    String gps_code = rs.getString("gps_code");
+                    String iata_code = rs.getString("iata_code");
+                    String local_code = rs.getString("local_code");
+                    String coordinates = rs.getString("coordinates");
+                    Airport a = new Airport(ident, type, name, elevation_ft, continent, iso_country, iso_region, municipality, gps_code, iata_code, local_code, coordinates);
+                    
+                    aerodromi.add(a);
+                }
+                return aerodromi;
+
+            } catch (SQLException ex) {
+                Logger.getLogger(AirportDAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(AirportDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public List<Airport> dajSveKorisnikAerodrome() {        
+        String upit = "SELECT a.* FROM MYAIRPORTS ma,AIRPORTS a WHERE ma.IDENT=a.IDENT";
+        try {
+            Class.forName(bpk.getDriverDatabase(server + baza));
+
+            try (
+                    Connection con = DriverManager.getConnection(server + baza, korisnik, lozinkaBP);
+                    Statement s = con.createStatement();
+                    ResultSet rs = s.executeQuery(upit)) {
+
+                List<Airport> aerodromi = new ArrayList<>();
+
+                while (rs.next()) {
+                    String ident = rs.getString("ident");
+                    String type = rs.getString("type");
+                    String name = rs.getString("name");
+                    String elevation_ft = rs.getString("elevation_ft");
+                    String continent = rs.getString("continent");
+                    String iso_country = rs.getString("iso_country");
+                    String iso_region = rs.getString("iso_region");
+                    String municipality = rs.getString("municipality");
+                    String gps_code = rs.getString("gps_code");
+                    String iata_code = rs.getString("iata_code");
+                    String local_code = rs.getString("local_code");
+                    String coordinates = rs.getString("coordinates");
+                    Airport a = new Airport(ident, type, name, elevation_ft, continent, iso_country, iso_region, municipality, gps_code, iata_code, local_code, coordinates);
+                    
+                    aerodromi.add(a);
+                }
+                return aerodromi;
+
+            } catch (SQLException ex) {
+                Logger.getLogger(AirportDAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(AirportDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public boolean provjeriAerodromULog(String ident, java.sql.Date datum) {
+        String upit = "SELECT * FROM MYAIRPORTSLOG WHERE "
+                + "IDENT = '" + ident + "' AND FLIGHTDATE = '" + datum + "'";
+        try {
+            Class.forName(bpk.getDriverDatabase(server + baza));
+            try {
+                Connection con = DriverManager.getConnection(server + baza, korisnik, lozinkaBP);
+                Statement s = con.createStatement();
+                ResultSet rs = s.executeQuery(upit);
+                if (rs.next()) {
+                    return true;
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(KorisnikDAO.class.getName()).log(Level.SEVERE, null, ex);
+                System.err.println("SQL provjera aerodromaUlog "+ex);
+            }
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(KorisnikDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+    
+    public void spremiAerodromULog(String ident, java.sql.Date datum) {
+        String upit = "INSERT INTO  MYAIRPORTSLOG (IDENT, FLIGHTDATE, STORED) VALUES ("
+                + "'" + ident + "', '" + datum + "', CURRENT_TIMESTAMP)";
+        try {
+            Class.forName(bpk.getDriverDatabase(server + baza));
+            try {
+                Connection con = DriverManager.getConnection(server + baza, korisnik, lozinkaBP);
+                Statement s = con.createStatement();
+                s.executeUpdate(upit);              
+
+            } catch (SQLException ex) {
+                Logger.getLogger(KorisnikDAO.class.getName()).log(Level.SEVERE, null, ex);
+                System.err.println("SQL spremanje aerodromaUlog "+ex);
+            }
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(KorisnikDAO.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("ClassNotFoundException spremanje aerodromaUlog "+ex);
+        }       
+    }
+    
+    public void spremiAvione(List<AvionLeti> avioni) {
+        for (AvionLeti avion : avioni) {
+            if (avion.getEstArrivalAirport() != null) {
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                String upit = "INSERT INTO AIRPLANES (icao24, firstseen, estdepartureairport, lastseen, estarrivalairport, "
+                        + "callsign, estDepartureAirportHorizDistance, estDepartureAirportVertDistance, estArrivalAirportHorizDistance, "
+                        + "estArrivalAirportVertDistance, departureAirportCandidatesCount, arrivalAirportCandidatesCount, stored)"
+                        + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                try (Connection con = DriverManager.
+                        getConnection(server + baza, korisnik, lozinkaBP);) {
+                    PreparedStatement s = con.prepareCall(upit);
+                    s.setString(1, avion.getIcao24());
+                    s.setInt(2, avion.getFirstSeen());
+                    s.setString(3, avion.getEstDepartureAirport());
+                    s.setInt(4, avion.getLastSeen());
+                    s.setString(5, avion.getEstArrivalAirport());
+                    s.setString(6, avion.getCallsign());
+                    s.setInt(7, avion.getEstDepartureAirportHorizDistance());
+                    s.setInt(8, avion.getEstDepartureAirportVertDistance());
+                    s.setInt(9, avion.getEstArrivalAirportHorizDistance());
+                    s.setInt(10, avion.getEstArrivalAirportVertDistance());
+                    s.setInt(11, avion.getDepartureAirportCandidatesCount());
+                    s.setInt(12, avion.getArrivalAirportCandidatesCount());
+                    s.setTimestamp(13, timestamp);
+                    s.executeUpdate();
+                    //                rs.close();
+                    //                s.close();
+                    //                con.close();
+                } catch (SQLException ex) {
+                    Logger.getLogger(AirportDAO.class.getName()).log(Level.SEVERE, null, ex);
+                    System.err.println("SQL spremiAvione "+ex);
+                }
+            }
+        }
+    }
+    
+}

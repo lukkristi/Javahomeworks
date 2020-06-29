@@ -1,0 +1,41 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.foi.nwtis.lukkristi.web.zrna;
+
+import javax.inject.Named;
+import javax.enterprise.context.SessionScoped;
+import java.io.Serializable;
+import lombok.Getter;
+import lombok.Setter;
+import org.foi.nwtis.lukkristi.ws.klijenti.Zadaca2_1WS;
+
+/**
+ *
+ * @author lukkristi
+ */
+@Named(value = "prijavaKorisnika")
+@SessionScoped
+public class PrijavaKorisnika implements Serializable {
+
+    @Getter
+    @Setter
+    String korisnik="";
+    @Getter
+    @Setter
+    String lozinka="";
+    /**
+     * Creates a new instance of PrijavaKorisnika
+     */
+    public PrijavaKorisnika() {
+    }
+    
+    public String prijaviKorisnika(){
+        Zadaca2_1WS zadaca2_1WS = new Zadaca2_1WS();
+        if(zadaca2_1WS.provjeriKorisnika(korisnik, lozinka))
+            return"dodavanjeAerodroma.xhtml?faces-redirect=true";
+        return "";
+    } 
+}

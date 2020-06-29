@@ -1,0 +1,71 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.foi.nwtis.lukkristi.ws.serveri;
+
+import javax.inject.Inject;
+import javax.jws.WebService;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.servlet.ServletContext;
+import org.foi.nwtis.lukkristi.konfiguracije.bp.BP_Konfiguracija;
+import org.foi.nwtis.lukkristi.web.podaci.KorisnikDAO;
+import org.foi.nwtis.podaci.Korisnik;
+import org.foi.nwtis.rest.klijenti.OSKlijent;
+import org.foi.nwtis.rest.podaci.AvionLetiPozicije;
+import org.foi.nwtis.rest.podaci.LetPozicija;
+
+/**
+ *
+ * @author lukkristi
+ */
+@WebService(serviceName = "Zadaca2")
+public class Zadaca2 {
+
+    @Inject
+    ServletContext context;
+
+    /**
+     * This is a sample web service operation
+     *
+     * @param noviKorisnik
+     * @return
+     */
+    @WebMethod(operationName = "dodajKorisnika")
+    public Boolean dodajKorisnika(@WebParam(name = "noviKorisnik") Korisnik noviKorisnik,
+            @WebParam(name = "lozinka") String lozinka) {
+        BP_Konfiguracija bpk = (BP_Konfiguracija) context.getAttribute("BP_Konfig");
+        KorisnikDAO korisnikDAO= new KorisnikDAO();
+        return korisnikDAO.dodajKorisnika(noviKorisnik, lozinka, bpk);
+        //TODO dodaj korisnika u BP, korisnikDAO kao primjer u priajsnjem primjeru 
+        
+    }
+    
+    
+    /**
+     * This is a sample web service operation
+     *
+     * @param korisnik
+     * @param lozinka
+     * @param icao24
+     * @param zaVrijeme
+     * @param noviKorisnik
+     * @return
+     */
+    @WebMethod(operationName = "najvecaVisinaLetaAviona")
+    public LetPozicija najvecaVisinaLetaAviona(@WebParam(name = "korisnik") String korisnik,
+            @WebParam(name = "lozinka") String lozinka,
+            @WebParam(name = "icao24") String icao24,
+            @WebParam(name = "zaVrijeme") long zaVrijeme) {
+        BP_Konfiguracija bpk = (BP_Konfiguracija) context.getAttribute("BP_Konfig");
+        String osnKorisnik= bpk.getKonfig().dajPostavku("OpenSkyNetwork.korisnik");
+        String osnLozinka= bpk.getKonfig().dajPostavku("OpenSkyNetwork.lozinka");
+        OSKlijent oSKlijent= new OSKlijent(osnKorisnik, osnLozinka);
+        AvionLetiPozicije pozicijeLetaAviona=oSKlijent.getTracks(icao24, zaVrijeme);
+        LetPozicija letPozicija= new LetPozicija();
+        //pronadji najvecu viisnu leta
+        return letPozicija;                
+    }
+}

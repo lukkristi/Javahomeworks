@@ -1,0 +1,72 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.foi.nwtis.lukkristi.ws.klijenti;
+
+import java.util.List;
+import org.foi.nwtis.lukkristi.ws.serveri.Aerodrom;
+
+
+/**
+ *
+ * @author lukkristi
+ */
+public class Zadaca2_1WS {
+    
+    public List<Aerodrom> dajAerodomeKorisnika(String korisnik, String lozinka){
+        List<Aerodrom> aerodromi = null;
+        
+        try { 
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service service = new org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service();
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2 port = service.getZadaca2Port();                     
+            aerodromi = port.dajAerodomeKorisnika(korisnik, lozinka);           
+        } catch (Exception ex) {
+            System.out.println("GRESKA kod 2.2 dajAerodromeKorisnika");
+        }
+
+        return aerodromi;
+    }
+    
+    public boolean dodajMojAerodrom(String korisnik, String lozinka, String icao){
+        boolean dodao= false;
+        
+        try {
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service service = new org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service();
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2 port = service.getZadaca2Port();          
+            dodao= port.dodajMojAerodrom(korisnik, lozinka, icao);           
+        } catch (Exception ex) {
+            System.out.println("GRESKA kod 2.2 dodajMojAerodrom "+ex.getMessage());
+        }
+
+        return dodao;
+    }
+    
+    public List<Aerodrom> dajAerodomeNaziv(String korisnik, String lozinka, String naziv){
+        List<Aerodrom> aerodromi = null;
+                
+        try { 
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service service = new org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service();
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2 port = service.getZadaca2Port();          
+            aerodromi = port.dajAerodomeNaziv(korisnik, lozinka, naziv);          
+        } catch (Exception ex) {
+            System.out.println("GRESKA kod 2.2 dajAerodromNaziv "+ex.getMessage());
+        }
+        return aerodromi;
+    }
+    
+    public List<Aerodrom> dajAerodomeDrzava(String korisnik, String lozinka, String drzava){
+        List<Aerodrom> aerodromi = null;
+                
+        
+        try { 
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service service = new org.foi.nwtis.lukkristi.ws.serveri.Zadaca2_Service();
+            org.foi.nwtis.lukkristi.ws.serveri.Zadaca2 port = service.getZadaca2Port();           
+            aerodromi= port.dajAerodomeDrzava(korisnik, lozinka, drzava);           
+        } catch (Exception ex) {
+            System.out.println("GRESKA kod 2.2 dajAerodromDrzava "+ex.getMessage());
+        }
+        return aerodromi;
+    }
+}

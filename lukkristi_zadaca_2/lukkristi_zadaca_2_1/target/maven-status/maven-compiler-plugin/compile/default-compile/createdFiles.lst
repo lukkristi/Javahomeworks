@@ -1,0 +1,5 @@
+org\foi\nwtis\lukkristi\web\podaci\KorisnikDAO.class
+org\foi\nwtis\lukkristi\web\podaci\AirportDAO.class
+org\foi\nwtis\lukkristi\web\slusaci\SlusacAplikacije.class
+org\foi\nwtis\lukkristi\web\dretve\PreuzimanjeLetovaAvionaAerodroma.class
+org\foi\nwtis\lukkristi\ws\serveri\Zadaca2.class
