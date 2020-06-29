@@ -1,0 +1,362 @@
+package org.foi.nwtis.lukkristi.zadaca_1;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
+import static java.lang.Integer.parseInt;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.foi.nwtis.lukkristi.konfiguracije.Konfiguracija;
+import org.foi.nwtis.lukkristi.konfiguracije.KonfiguracijaApstraktna;
+import org.foi.nwtis.lukkristi.konfiguracije.KonfiguracijaTXT;
+import org.foi.nwtis.lukkristi.konfiguracije.KonfiguracijaXML;
+import org.foi.nwtis.lukkristi.konfiguracije.NeispravnaKonfiguracija;
+import org.foi.nwtis.lukkristi.konfiguracije.NemaKonfiguracije;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class ServerAviona {
+
+    private ThreadGroup tgServisneDretve;
+    private ThreadGroup tgKorisnickeDretve;
+    private List<ZahtjevAviona> dretveZahtjevaAviona = null;
+    private List<Aerodrom> aerodromi = null;
+    private List<Korisnik> korisnici = null;
+    private List<Avion> avioni = null;
+    boolean radi = true;
+    private ServisAviona servisAviona;
+
+    public ServerAviona() {
+        dretveZahtjevaAviona = Collections.synchronizedList(
+                new ArrayList<>()
+        );
+    }
+
+    /**
+     * Početna metoda servernog programa, prima argument naziv datoteke iz koje program učitava konfiguraciju i postavlja
+     * konfiguraciju programa
+     *
+     * @param args argumenti s komandne linije
+     */
+    public static void main(String[] args) throws NemaKonfiguracije, NeispravnaKonfiguracija {
+
+        ServerAviona sa = new ServerAviona();
+        String parametar = sa.pripremiParametre(args);
+        String[] parametri = parametar.split(" –-");
+        boolean status = sa.provijeriParametre(parametar);
+        if (!status) {
+            System.err.println("Pogrešan unos parametra!");
+            return;
+        }
+        String nazivDatoteke = parametri[0];
+        Konfiguracija konfiguracija;
+        try {
+            konfiguracija = sa.ucitajKonfiguraciju(nazivDatoteke);
+        } catch (Exception ex) {
+            System.err.println("Problem s učitavanjem konfiguracije!");
+            return;
+        }
+        sa.ucitajKorisnike(konfiguracija);
+        sa.ucitajAerodrome(konfiguracija);
+        sa.ucitajAvione(konfiguracija);
+        sa.ispisiAvione(sa.avioni);
+        sa.pokreniServisneDretve(konfiguracija);
+//        sa.kreirajKorisnickuDretvu(konfiguracija, parametri[1]);
+
+//        if (!aerodromi.isEmpty()) {
+//            for(Aerodrom k: aerodromi){
+//                System.err.println(k.getIcao()+" "+ k.getNaziv()+" "+ k.getDrzava()+" "+ k.getgSirina()+" "+ k.getgDuzina());
+//           
+//            }
+//        }
+    }
+
+    /**
+     * Metoda uzima argumente i priprema ih za uporabu
+     *
+     * @param args argumenti s komandne linije
+     * @return obrađeni parametri
+     */
+    public String pripremiParametre(String[] args) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < args.length; i++) {
+            sb.append(args[i]).append(" ");
+        }
+        String parametri = sb.toString().trim();
+        return parametri;
+    }
+
+    /**
+     * Metoda provjerava jesu li valjani parametri (datoteka)
+     *
+     * @param parametri koji se provjeravaju (naziv datoteke)
+     * @return status ispravbnosti
+     */
+    public boolean provijeriParametre(String parametri) {
+        String sintaksa = "^([^\\s]+)\\.(txt|xml|json|bin)\\s–-brojDretvi\\s+([1-9]|1\\d|20)$";
+        Pattern pattern = Pattern.compile(sintaksa);
+        Matcher m = pattern.matcher(parametri);
+        boolean status = m.matches();
+        return status;
+    }
+
+    /**
+     * Metoda učitava konfiguraciju iz konfiguracijske datoteke
+     *
+     * @param nazivDatoteke naziv datoteke konfiguracije
+     * @return konfiguracija programa
+     * @throws Exception exception koji se može pojaviti prilikom čitanja iz datoteke
+     */
+    public Konfiguracija ucitajKonfiguraciju(String nazivDatoteke) throws Exception {
+        try {
+            Konfiguracija konfiguracija = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
+            return konfiguracija;
+        } catch (NemaKonfiguracije | NeispravnaKonfiguracija ex) {
+
+            throw new Exception(ex.getMessage());
+        }
+    }
+
+    /**
+     * Metoda pokreće servisnu dretvu ServisAviona
+     *
+     * @param konfiguracija konfiguracija programa
+     */
+    public void pokreniServisneDretve(Konfiguracija konfiguracija) {
+        this.tgServisneDretve = new ThreadGroup("lukkristi_SD");
+        servisAviona = new ServisAviona(
+                this.tgServisneDretve,
+                this.tgServisneDretve.getName() + "_1",
+                konfiguracija,
+                avioni
+        );
+        servisAviona.start();
+    }
+
+    /**
+     * Metoda kreira korisničke dreve i dodaje ih u kolekciju korisničkih dretvi
+     *
+     * @param konfiguracija konfiguracija programa
+     * @param paramBrojDretvi parametar o broju dretvi
+     */
+    public void kreirajKorisnickuDretvu(Konfiguracija konfiguracija, String paramBrojDretvi) {
+        String[] brDretvi = paramBrojDretvi.split(" ");
+        int maxBrojDretvi = parseInt(brDretvi[1]);
+        if (dretveZahtjevaAviona.isEmpty()) {
+            this.tgKorisnickeDretve = new ThreadGroup("lukkristi_KD");
+            pripremiDretvu(2, konfiguracija);
+        } else if (dretveZahtjevaAviona.size() == 1 &&!PostojiSlobodnaDretva()) {
+            int brojDretvi = dretveZahtjevaAviona.size();
+            brojDretvi += 2;
+            pripremiDretvu(brojDretvi, konfiguracija);
+        } else if (dretveZahtjevaAviona.size() <= maxBrojDretvi && !PostojiSlobodnaDretva()) {
+            pripremiDretvu(dretveZahtjevaAviona.size(), konfiguracija);
+        }
+    }
+
+    /**
+     * Kreira dretvu ZatjevAviona i sprema ju u listu
+     *
+     * @param brojDretvi broj dretve za naziv 
+     * @param konfiguracija konfiguracija programa
+     */
+    private void pripremiDretvu(int brojDretvi, Konfiguracija konfiguracija) {
+        ZahtjevAviona dz = new ZahtjevAviona(
+                this.tgKorisnickeDretve,
+                this.tgKorisnickeDretve.getName() + "_" + brojDretvi,
+                konfiguracija,
+                korisnici,
+                aerodromi,
+                avioni
+        );
+        this.dretveZahtjevaAviona.add(dz);
+    }
+    /**
+     * Provjerava slobodne dretvu, ukoliko nema slobodni dretvi vraća false
+     *
+     * @return true ako postoji slobodna dretva inaöe false
+     */
+    public boolean PostojiSlobodnaDretva(){
+        for (ZahtjevAviona dz : dretveZahtjevaAviona) {
+            if (dz.getState() == Thread.State.WAITING) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Dohvaća prvu slobodnu dretvu, ukoliko nema slobodni dretvi vraća null
+     *
+     * @return slobodna dretva
+     */
+    public ZahtjevAviona dajSlobdonuDretvu() {       
+        for (ZahtjevAviona dz : dretveZahtjevaAviona) {
+            if (dz.getState() == Thread.State.NEW || dz.getState() == Thread.State.WAITING) {
+                return dz;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Metoda otvara socket te osluškuje zahtjeve i dodjeljuje dretvu zahtjeva zahtjevu.Ukoliko nema slobodnih dretvi šalje       
+     * korisniku poruku o grešci
+     * @param konfiguracija konfiguracija programa
+     * @param paramBrojDretvi
+     */
+    public void pokreniServer(Konfiguracija konfiguracija, String paramBrojDretvi ) {
+        int port = parseInt(konfiguracija.dajPostavku("port.avioni"));
+        int brojCekaca = parseInt(konfiguracija.dajPostavku("maks.cekaca"));
+        try {
+            ServerSocket ss = new ServerSocket(port, brojCekaca);
+            while (radi) {
+                Socket socket = ss.accept();
+                kreirajKorisnickuDretvu(konfiguracija,paramBrojDretvi);
+                ZahtjevAviona zahtjevaAviona = dajSlobdonuDretvu();
+                if (zahtjevaAviona == null) {
+                    vratiPorukuOGresciKorisniku(socket);
+                    continue;
+                }
+                zahtjevaAviona.setSocket(socket);
+                if (zahtjevaAviona.getState() == Thread.State.WAITING) {
+                    synchronized (zahtjevaAviona) {
+                        zahtjevaAviona.notify();
+                    }
+                } else {
+                    zahtjevaAviona.start();
+                }
+            }
+            System.out.println("Kraj Servera!!!");
+        } catch (IOException ex) {
+            System.err.println("Ne može se otvoriti socket na zadanom portu!");
+        }
+    }
+
+    /**
+     * Metoda šalje korrisniku poruku o grešci da nema slobodnih dretvi
+     *
+     * @param socket socket na koji se šalje odgovor
+     * @throws IOException exception koji se može dogoditi prilikom slanja poruke na socket
+     */
+    public void vratiPorukuOGresciKorisniku(Socket socket) throws IOException {
+        OutputStream os = socket.getOutputStream();
+        String odgvor = "ERROR 01; Nema slobodnih dretvi.";
+        os.write(odgvor.getBytes());
+        os.flush();
+        socket.shutdownOutput();
+        socket.close();
+    }
+
+    /**
+     * Metoda učitava avione ulokiko postoji datoteka, inače javlja grešku
+     *
+     * @param konfiguracija konfiguracija programa
+     */
+    public void ucitajAvione(Konfiguracija konfiguracija) {
+        FileInputStream in = null;
+        String datoteka = konfiguracija.dajPostavku("datoteka.avioni");
+        File f = new File(datoteka);
+        avioni = new ArrayList<Avion>();
+        if (f.exists()) {
+            try {
+                ObjectInputStream s = null;
+                in = new FileInputStream(datoteka);
+                s = new ObjectInputStream(in);
+                avioni = (ArrayList<Avion>) s.readObject();
+            } catch (FileNotFoundException ex) {
+                System.err.println("Ne postoji serijalizirana datoteka s avionima!");
+            } catch (IOException | ClassNotFoundException ex) {
+                System.err.println("Greška prilikom čitanja datoteke avioni!");
+            } finally {
+                try {
+                    in.close();
+                } catch (IOException ex) {
+                    System.err.println("Greška prilikom čitanja datoteke avioni!");
+                }
+            }
+        } else {
+            System.err.println("Nema datoteke avioni");
+        }
+    }
+
+    /**
+     * Metoda učitava sve korisnike iz datoteke korisnika u listu
+     *
+     * @param konfiguracija konfiguracja programa
+     */
+    public void ucitajKorisnike(Konfiguracija konfiguracija) throws NemaKonfiguracije, NeispravnaKonfiguracija {
+        korisnici = new ArrayList<Korisnik>();
+        String datoteka = konfiguracija.dajPostavku("datoteka.korisnika");
+        Konfiguracija konf = KonfiguracijaApstraktna.preuzmiKonfiguraciju(datoteka);
+        konf.dajSvePostavke().forEach((k, v) -> korisnici.add(new Korisnik((String) k, (String) v)));
+    }
+
+    /**
+     * Metoda učitava sve aerodrome iz datoteke aerodroma u listu
+     *
+     * @param konfiguracija konfiguracja programa
+     */
+    public void ucitajAerodrome(Konfiguracija konfiguracija) throws NemaKonfiguracije, NeispravnaKonfiguracija {
+        aerodromi = new ArrayList<Aerodrom>();
+        String[] sredjeniAerodrom = null;
+        Aerodrom noviAerodrom;
+        String datoteka = konfiguracija.dajPostavku("datoteka.aerodromi");
+        Konfiguracija konf = KonfiguracijaTXT.preuzmiKonfiguraciju(datoteka);
+        for (Object kljuc : konf.dajSvePostavke().entrySet()) {
+            if (!kljuc.toString().contains("icao")) {
+                sredjeniAerodrom = UrediPodatkeAerodroma(kljuc.toString());
+                noviAerodrom = new Aerodrom(sredjeniAerodrom[0], sredjeniAerodrom[1], sredjeniAerodrom[2],
+                        sredjeniAerodrom[3], sredjeniAerodrom[4]);
+                aerodromi.add(noviAerodrom);
+            }
+        }
+    }
+
+    /**
+     * Ureddjivanje podataka o aerodromu
+     *
+     * @param aerodrom svi podaci o jednom aerodromu u stringu
+     * @return vraca niz uredjenih podataka o aerodromu
+     */
+    private String[] UrediPodatkeAerodroma(String aerodrom) {
+        String parametri = aerodrom;
+        parametri = parametri.replace("\"", "");
+        parametri = parametri.replace("=", " ");
+        String[] aer = parametri.split(",");
+        aer[4] = aer[4].replace(" ", "");
+        return aer;
+    }
+
+    /**
+     * Ispisuje avione ako postoji aviona
+     *
+     * @param avioni lista aviona
+     *
+     */
+    private void ispisiAvione(List<Avion> avioni) {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+        String avion = "";
+        int i = 1;
+        if (!avioni.isEmpty()) {
+            for (Avion a : avioni) {
+                avion = a.getNaziv() + ", " + a.getPolazniAerodrom().getIcao() + ", " + a.getOdredisniAerodrom().getIcao();
+                avion += ", " + df.format(a.getVrijemePolijetanja().toString()) + " , " + df.format(a.getVrijemeSlijetanja().toString());
+                System.out.println(i + " " + avion);
+                i++;
+            }
+        }
+    }
+}

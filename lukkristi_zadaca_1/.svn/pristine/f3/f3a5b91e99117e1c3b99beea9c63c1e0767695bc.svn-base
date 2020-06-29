@@ -1,0 +1,17 @@
+
+package org.foi.nwtis.lukkristi.zadaca_1;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class KorisnikAviona {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TODO code application logic here
+    }
+    
+}

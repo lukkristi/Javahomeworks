@@ -1,0 +1,108 @@
+
+package org.foi.nwtis.lukkristi.zadaca_1;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.foi.nwtis.lukkristi.konfiguracije.Konfiguracija;
+import org.foi.nwtis.lukkristi.konfiguracije.KonfiguracijaApstraktna;
+import org.foi.nwtis.lukkristi.konfiguracije.NeispravnaKonfiguracija;
+import org.foi.nwtis.lukkristi.konfiguracije.NemaKonfiguracije;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class ServerAviona {
+
+    private ThreadGroup tgServisneDretve;
+    private ThreadGroup tgKorisnickeDretve;
+    private List<ZahtjevAviona> dretveZahtjevaAviona = null;
+    private List<Aerodrom> aerodromi = null;
+    private List<Korisnik> korisnici = null;
+    private List<Avion> avioni = null;
+    boolean radi = true;
+    private ServisAviona servisAviona;
+
+    public ServerAviona() {
+        dretveZahtjevaAviona=Collections.synchronizedList(
+                new ArrayList<>()
+        );
+    }
+    
+    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TODO code application logic here
+    }
+    
+    
+    /**
+     * Metoda uzima argumente i priprema ih za uporabu
+     *
+     * @param args argumenti s komandne linije
+     * @return obrađeni parametri
+     */
+    public String pripremiParametre(String[] args) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < args.length; i++) {
+            sb.append(args[i]).append(" ");
+        }
+        String parametri = sb.toString().trim();
+        return parametri;
+    }
+    
+    /**
+     * Metoda provjerava jesu li valjani parametri (datoteka)
+     *
+     * @param parametri koji se provjeravaju (naziv datoteke)
+     * @return status ispravbnosti
+     */
+    public boolean provijeriParametre(String parametri) {
+        String sintaksa = "^([^\\s]+)\\.(txt|xml|json|bin)$";
+        Pattern pattern = Pattern.compile(sintaksa);
+        Matcher m = pattern.matcher(parametri);
+        boolean status = m.matches();
+        return status;
+    }
+    
+    /**
+     * Metoda učitava konfiguraciju iz konfiguracijske datoteke
+     *
+     * @param nazivDatoteke naziv datoteke konfiguracije
+     * @return konfiguracija programa
+     * @throws Exception exception koji se može pojaviti prilikom čitanja iz datoteke
+     */
+    public Konfiguracija ucitajKonfiguraciju(String nazivDatoteke) throws Exception {
+        try {
+            Konfiguracija konfiguracija = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
+            return konfiguracija;
+        } catch (NemaKonfiguracije | NeispravnaKonfiguracija ex) {
+
+            throw new Exception(ex.getMessage());
+        }
+    }
+    
+    
+    /**
+     * Metoda pokreće servisnu dretvu ServisAviona
+     *
+     * @param konfiguracija konfiguracija programa
+     */
+    public void pokreniServisneDretve(Konfiguracija konfiguracija) {
+        this.tgServisneDretve = new ThreadGroup("lukkristi_SD");
+        servisAviona = new ServisAviona(
+                this.tgServisneDretve,
+                this.tgServisneDretve.getName() + "_1",
+                konfiguracija,
+                avioni
+        );
+        servisAviona.start();        
+    }
+
+    
+}

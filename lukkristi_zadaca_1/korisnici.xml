@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<comment>matnovak</comment>
+	<entry key="admin">foi</entry>
+	<entry key="matnovak">FOI_1234</entry>
+	<entry key="dkermek">FOI_5678</entry>
+	<entry key="pkos">123456</entry>
+	<entry key="ivoKrstic">dumadjeca4</entry>
+	<entry key="lukkrist-1">milak23</entry>
+	<entry key="stevan">jabuka</entry>
+	<entry key="mongol5">mungos</entry>
+</properties>

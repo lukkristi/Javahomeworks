@@ -1,0 +1,108 @@
+
+package org.foi.nwtis.lukkristi.zadaca_1;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+import java.util.logging.Logger;
+import org.foi.nwtis.lukkristi.konfiguracije.Konfiguracija;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class ServisAviona extends Thread {
+    
+    private boolean radi = true;
+    private int interval;
+    private Konfiguracija konfiguracija;
+    private List<Avion> avioni;
+    private ObjectOutputStream s = null;
+    private int cekanje;
+    private int pocetakIntervala;
+
+    /**
+     * Konstruktor servisa aviona postavlja podatke potrebne za rad
+     * @param konfiguracija konfiguracija programa
+     * @param avioni lista podataka aviona
+     * @param group grupa dretve
+     * @param name naziv dretve
+     */
+    public ServisAviona(ThreadGroup group, String name,Konfiguracija konfiguracija, List<Avion> avioni) {
+        super(group, name);
+        this.konfiguracija = konfiguracija;
+        this.avioni = avioni;
+        interval= Integer.parseInt(konfiguracija.dajPostavku("interval.pohrane.aviona"));
+    }
+    
+    
+
+    @Override
+    public void interrupt() {
+        radi=false;
+    }
+
+    @Override
+    public void run() {
+        interval *= 1000;
+        cekanje = interval;
+        while (radi) {
+            try {
+                System.out.println(this.getName() + " run");
+                s = serijalizirajAvione();                
+                try {                    
+                    Thread.sleep(cekanje);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(this.getName() + "prekid");
+                    radi = false;
+                }
+            } catch (IOException ex) {
+//                System.err.println("Greška prilikom serijalizacije1.");
+                System.err.println(ex);
+            } finally {
+                try {
+                    s.close();
+                } catch (IOException ex) {
+                    System.err.println("Greška prilikom serijalizacije2.");
+                    System.err.println(ex.getMessage());
+                }
+            }         
+        }
+        System.out.println("Kraj servisa aviona!!!");
+    }
+
+    /**
+     * Naslijeđena metoda za pokretanje dretve
+     */
+    @Override
+    public synchronized void start() {
+        super.start(); 
+    }
+
+    /**
+     * Serijalizacija kolekcije aviona
+     * @return object output stream
+     * @throws IOException greška prilikom upisa
+     * @throws FileNotFoundException datoteka nije pronađena
+     */
+    public ObjectOutputStream serijalizirajAvione () throws IOException, FileNotFoundException {
+        String datoteka =konfiguracija.dajPostavku("datoteka.avioni");
+        FileOutputStream out = new FileOutputStream(datoteka);
+        s = new ObjectOutputStream(out);
+        s.writeObject(avioni);
+        s.close();
+        return s;
+    }
+    
+    public String dohvatiVrijeme() {
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss.SSS");
+        String vrijeme = sdf.format(cal.getTime());
+        return vrijeme;
+    }
+    
+}

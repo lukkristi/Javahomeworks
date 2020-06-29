@@ -1,0 +1,25 @@
+
+package org.foi.nwtis.lukkristi.zadaca_1;
+
+/**
+ *
+ * @author lukkristi
+ */
+public class ServisAviona extends Thread {
+
+    @Override
+    public void interrupt() {
+        super.interrupt(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void run() {
+        super.run(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public synchronized void start() {
+        super.start(); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+}
